@@ -54,5 +54,5 @@ input_data = {
 
 # Enviar requisição-----------------------------------------------------------
 headers = {"Authorization": "Bearer meu-token-secreto-12345"}
-response = requests.post("http://127.0.0.1:8000/predict", json=input_data, headers=headers)
+response = requests.post("https://api-digital-twin.onrender.com", json=input_data, headers=headers)
 print(response.json())  # Exemplo: {"prediction": 42.5}
