@@ -29,7 +29,7 @@ def ReturnInputFeaturesModel(database_name):
             database_name: Nome da base de dados
 
     """
-    df=getColumnsfromDatabase("ciclone1_diario")
+    df=getColumnsfromDatabase(database_name)
     input_features = [column for column in df.columns if column != "DATA"]
     features_add = ['ano', 'DATA_mes_sin', 'DATA_mes_cos', 'DATA_dia_sin',
         'DATA_dia_cos']
@@ -54,5 +54,5 @@ input_data = {
 
 # Enviar requisição-----------------------------------------------------------
 headers = {"Authorization": "Bearer meu-token-secreto-12345"}
-response = requests.post("https://api-digital-twin.onrender.com", json=input_data, headers=headers)
+response = requests.post("https://api-digital-twin.onrender.com/predict", json=input_data, headers=headers)
 print(response.json())  # Exemplo: {"prediction": 42.5}

@@ -46,13 +46,13 @@ def GetAllModelfromPath(path, input, output, y):
     )
 
     # Criar a pasta 'models' se ela não existir
-    os.makedirs("models", exist_ok=True)
+    os.makedirs(path, exist_ok=True)
 
     # Tentar fazer o download
     try:
         response = requests.get(url)
         response.raise_for_status()  # Lança erro se status != 200
-        file_path = os.path.join("models", f"{input}_{output}_{y}.joblib")
+        file_path = os.path.join(path, f"{input}_{output}_{y}.joblib")
         with open(file_path, "wb") as f:
             f.write(response.content)
         print(f"Arquivo '{file_path}' baixado com sucesso!")
@@ -94,6 +94,31 @@ for file_name in os.listdir(MODEL_DIR):
         except Exception as e:
             print(f"Erro ao carregar {model_name}: {e}")
 
+def LoadModels(path_name):
+    """
+    args:
+        path_name: Caminho onde está os modelos.
+    """
+    MODEL ={}
+    for file_name in os.listdir(path_name):
+        if file_name.endswith(".joblib"):
+            model_path = os.path.join(path_name, file_name)
+            model_name = file_name.replace(".joblib", "")  # Ex.: "ciclone1_primario_alimentacao_flotacao_finos_colunaX"
+            try:
+                MODEL[model_name] = joblib.load(model_path)
+                print(f"Modelo carregado: {model_name}")
+            except Exception as e:
+                print(f"Erro ao carregar {model_name}: {e}")
+
+    return MODEL
+
+#Carregando os Modelos----------------------------------------------------------------------
+model_3_1=LoadModels("models/3_1")
+model_3_2=LoadModels("models/3_2")
+
+
+
+
 # Definir o modelo de dados esperado do usuário
 class InputData(BaseModel):
     features: dict  # Dados de entrada como dicionário (ex.: {"col1": 10.5, "col2": 20.3})
@@ -122,6 +147,18 @@ def predict(data: InputData):
         return {"prediction": float(prediction[0])}  # Retorna a previsão como float
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao fazer previsão: {e}")
+class InputDataFiltered(BaseModel):
+    target_process:str
+@app.get("/filtered-features",dependencies=[Depends(verify_token)])
+def predict_filtered(data: InputDataFiltered):
+    #Obtém a entrada do que foi enviada via get pelo usuario
+    target_process = data.target_process
+    
+    if data in ["3_1","3_2"]:
+        pass
+    else:
+        raise HTTPException(status_code=404, detail=f"Modelo '{target_model}' não encontrado. Modelos disponíveis: {list(MODELS.keys())}")
+
 
 # Rodar a API
 if __name__ == "__main__":
