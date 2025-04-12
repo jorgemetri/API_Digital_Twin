@@ -140,8 +140,8 @@ def FilteredModels(models):
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-DownloadModels("models/3_1","ciclone1_primario","alimentacao_flotacao_finos","alimentacaoflotacaofines_diario")
-
+DownloadModels(r"models\3_1","cicl1_prim","alim_flot_finos","alimentacaoflotacaofines_diario")
+DownloadModels(r"models\3_2","cicl2_prim","alim_flot_finos","alimentacaoflotacaofines_diario")
 
 # Carregar todos os modelos disponíveis ao iniciar a API
 MODELS = {}
