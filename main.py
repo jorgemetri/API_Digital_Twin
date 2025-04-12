@@ -7,6 +7,7 @@ import os
 import requests
 import pandas as pd
 from io import StringIO
+import numpy as np
 
 app = FastAPI()
 
@@ -21,6 +22,49 @@ def verify_token(token: str = Depends(token_header)):
 
 # Diretório onde os modelos .joblib estão salvos (ajuste conforme necessário)
 MODEL_DIR = "./models"
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def getColumnsfromDatabase(file_name):
+    """
+    Retorna as colunas de uma tabela a partir do nome, refere-se especificamente a tabelas com dados diários
+    args:
+        file_name: Nome do arquivo que refere-se a base dados de dados
+    """
+    url = (
+        f"https://samarcodatalake.blob.core.windows.net/dbw-manutencao/"
+        f"{file_name}.csv?"
+        "sp=rle&st=2025-03-25T17:20:01Z&se=2032-01-01T01:20:01Z&spr=https&"
+        "sv=2024-11-04&sr=c&sig=m34YG3Dox614y9SiSNJWVnGsgejevMIp7EfUeX0riyM%3D"
+    )
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Lança erro se status != 200
+        csv_string = StringIO(response.text)
+        df = pd.read_csv(csv_string)
+        return df
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao baixar o arquivo: {e}")
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def ReturnInputFeaturesModel(database_name):
+    """
+    Adiciona algumas features a mais para pegar o nome de todas as colunas de dados diários.
+    Retorna as Features de Entrada do Modelo Filtrado.
+        args:
+            database_name: Nome da base de dados
+
+    """
+    df=getColumnsfromDatabase(database_name)
+    input_features = [column for column in df.columns if column != "DATA"]
+    features_add = ['ano', 'DATA_mes_sin', 'DATA_mes_cos', 'DATA_dia_sin',
+        'DATA_dia_cos']
+    return input_features + features_add
+
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -37,6 +81,7 @@ def GetDataBase(file_name):
         print(f"Erro ao baixar o arquivo: {response.status_code}")
         return None
 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def GetAllModelfromPath(path, input, output, y):
     url = (
         f"https://samarcodatalake.blob.core.windows.net/dbw-manutencao/"
@@ -60,6 +105,7 @@ def GetAllModelfromPath(path, input, output, y):
         print(f"Erro ao baixar o arquivo: {e}")
 
 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def DownloadModels(path,input_name,output_name,input_table_name):
     """
@@ -76,8 +122,23 @@ def DownloadModels(path,input_name,output_name,input_table_name):
     for column in columns:
         #GetAllModelfromPath("models/3_1","ciclone1_primario","alimentacao_flotacao_finos",column)
         GetAllModelfromPath(path,input_name,output_name,column)
+#-----------------------------------------------------------------------------------------------------------
+def FilteredModels(models):
+    """
+    Recebe como entrada um dicionário de modelos e retorna os nomes dos modelos que atendem às condições.
+    args:
+        models: Dicionário com os modelos treinados
+    return:
+        Lista com os nomes dos modelos filtrados
+    """
+    filtered_model_names = []
+    for model_name in models.keys():
+        if models[model_name].intercept_ > -10:
+            print(f"{model_name}: {models[model_name].intercept_}")
+            filtered_model_names.append(model_name)
+    return filtered_model_names
 
-
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 DownloadModels("models/3_1","ciclone1_primario","alimentacao_flotacao_finos","alimentacaoflotacaofines_diario")
 
@@ -96,6 +157,7 @@ for file_name in os.listdir(MODEL_DIR):
 
 def LoadModels(path_name):
     """
+    Função para carregar todos os modelos a partir de um pathname. Será utilizada posteriormente em predict.
     args:
         path_name: Caminho onde está os modelos.
     """
@@ -112,23 +174,72 @@ def LoadModels(path_name):
 
     return MODEL
 
-#Carregando os Modelos----------------------------------------------------------------------
+#Carregando todos os  Modelos----------------------------------------------------------------------
 model_3_1=LoadModels("models/3_1")
 model_3_2=LoadModels("models/3_2")
 
 
 
 
+#Rota que retorna os coeficientes do modelo de regresse: [intercept,x1,x2,...,xn]
+class InputGetParams(BaseModel):
+    class_model:str
+    target_model:str
+@app.get('/params',dependencies=[Depends(verify_token)])
+def params(data:InputGetParams):
+
+    class_model = data.class_model
+    target_model = data.target_model
+
+     
+    if class_model not in ["3_1","3_2"]:
+        raise HTTPException(status_code=404, detail=f"Classe de modelo {class_model} não encontrado!")
+    
+    if class_model == "3_1":
+            MODELS = model_3_1
+    elif class_model == "3_2":
+            MODELS = model_3_2
+    else:
+        pass
+
+    if target_model not in MODELS.keys():
+        raise HTTPException(status_code=404, detail=f"Modelo  {target_model} não encontrado!")
+    
+    try:
+        params = np.concatenate([[MODELS[target_model].intercept_],MODELS[target_model].coef_])
+        print("parametro",params)
+        return {'params':params.tolist()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao retornar parâmetros dos modelos filtrados: {e}")
+    
+
+
+
 # Definir o modelo de dados esperado do usuário
 class InputData(BaseModel):
     features: dict  # Dados de entrada como dicionário (ex.: {"col1": 10.5, "col2": 20.3})
+    class_model: str
     target_model: str  # Nome do modelo a ser usado (ex.: "ciclone1_primario_alimentacao_flotacao_finos_colunaX")
+
+
 
 @app.post("/predict", dependencies=[Depends(verify_token)])
 def predict(data: InputData):
     # Extrair os dados de entrada e o modelo solicitado
-    input_dict = data.features
-    target_model = data.target_model
+    input_dict = data.features# Contém as feautres de entrada do modelo
+    class_model = data.class_model# Refere=se a qual tipo de subpasta em models está o modelo ex: models\3_2,models\3_1
+    target_model = data.target_model#Refere-se ao modelo específico dentro da pasta model
+    
+    #Carrega os modelos de acorod com class_model
+    
+    if class_model == "3_1":
+        MODELS = model_3_1
+    elif class_model == "3_2":
+        MODELS = model_3_2
+    else:
+        pass
+
+
 
     # Verificar se o modelo existe
     if target_model not in MODELS:
@@ -147,17 +258,42 @@ def predict(data: InputData):
         return {"prediction": float(prediction[0])}  # Retorna a previsão como float
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao fazer previsão: {e}")
-class InputDataFiltered(BaseModel):
-    target_process:str
-@app.get("/filtered-features",dependencies=[Depends(verify_token)])
-def predict_filtered(data: InputDataFiltered):
-    #Obtém a entrada do que foi enviada via get pelo usuario
-    target_process = data.target_process
     
-    if data in ["3_1","3_2"]:
-        pass
-    else:
-        raise HTTPException(status_code=404, detail=f"Modelo '{target_model}' não encontrado. Modelos disponíveis: {list(MODELS.keys())}")
+
+class InputClassFilteredModel(BaseModel):
+    class_model: str   
+@app.get("/filtered-models", dependencies=[Depends(verify_token)])
+def get_filtered_models(data: InputClassFilteredModel):
+    class_model = data.class_model
+    # Verificar se a classe de modelo existe
+    if class_model not in ["3_1","3_2"]:
+        raise HTTPException(status_code=404, detail=f"Classe de modelo {class_model} não encontrado!")
+    
+    try:
+        if class_model == "3_1":
+            filtered_models = FilteredModels(model_3_1)
+           
+        elif class_model == "3_2":
+            filtered_models = FilteredModels(model_3_2)
+
+        return {"filtered_models":filtered_models}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao retornar modelos filtrados: {e}")
+    
+
+
+
+
+class InputDataModel(BaseModel):
+    database:str #Refere-se a subpasta dentro de models
+@app.get("/features", dependencies=[Depends(verify_token)])
+def get_filtered_features(data: InputDataModel):
+    database = data.database
+    try:
+        input_features = ReturnInputFeaturesModel(database)
+        return {"features": input_features}  # Retorna as features calculadas
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Nome de tabela informado errado ou não existe! Não foi possível retornar os dados corretamente: {e}")
 
 
 # Rodar a API

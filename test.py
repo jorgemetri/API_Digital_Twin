@@ -25,6 +25,7 @@ def getColumnsfromDatabase(file_name):
 
 def ReturnInputFeaturesModel(database_name):
     """
+    Retorna as Features de Entrada do Modelo Filtrado.
         args:
             database_name: Nome da base de dados
 
