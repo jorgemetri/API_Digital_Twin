@@ -295,6 +295,43 @@ def get_filtered_features(data: InputDataModel):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Nome de tabela informado errado ou não existe! Não foi possível retornar os dados corretamente: {e}")
 
+#Rota para pegar a base de dados filtrada pela última linha, baseado no nome e no nome 
+# da coluna.
+class InputDataDatabase(BaseModel):
+    nome_database: str
+    nome_coluna:str
+
+# Rota para pegar a última linha da base de dados, ordenada pela coluna "DATA"
+@app.get("/lastrow", dependencies=[Depends(verify_token)])
+def get_last_row_database_with_Column_name(data: InputDataDatabase):
+    nome_database = data.nome_database
+    nome_coluna = data.nome_coluna
+
+    try:
+        # Obtém a base de dados
+        database_filtered_last_row = GetDataBase(nome_database)
+        
+        # Verifica se o DataFrame foi retornado com sucesso
+        if database_filtered_last_row is None:
+            return {"error": "Falha ao baixar a base de dados"}
+
+        # Verifica se a coluna "DATA" existe no DataFrame
+        if nome_coluna not in database_filtered_last_row.columns:
+            return {"error": f"Coluna '{nome_coluna}' não encontrada na base de dados"}
+
+     
+        # Ordena o DataFrame pela coluna "DATA" em ordem decrescente
+        database_filtered_last_row = database_filtered_last_row.sort_values(by='DATA', ascending=False)
+
+        # Pega a primeira linha (a mais recente)
+        last_row = database_filtered_last_row.iloc[0].to_dict()
+  
+
+        return {"last_row": last_row[nome_coluna]}
+
+    except Exception as e:
+        return {"error": f"Erro ao processar a solicitação: {str(e)}"}
+
 
 # Rodar a API
 if __name__ == "__main__":
