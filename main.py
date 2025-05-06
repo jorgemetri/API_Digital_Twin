@@ -122,21 +122,24 @@ def GetAllModelfromPath(path, input, output, y):
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def DownloadModels(path,input_name,output_name,input_table_name):
+def DownloadModels(path, input_name, output_name, input_table_name):
     """
     args:
         path: Caminho onde se encontra os modelos
         input_name: nome do ponto de amostra de entrada
         output_name: nome do ponto de amostra de saida
-        input_table_name: nome da tabela com as variaveis input do kolo
-    
+        input_table_name: nome da tabela com as variaveis input do modelo
     """
-    df=GetDataBase(input_table_name)
+    df = GetDataBase(input_table_name)
 
     columns = [column for column in df.columns if column != "DATA"]
     for column in columns:
+        if any(x in path for x in ["5_3", "8_6", "9_5", "9_6"]):
+            new_column_name = column.replace(".", "_")
+            new_column_name = new_column_name.replace("-", "_")
+            column = new_column_name
         #GetAllModelfromPath("models/3_1","ciclone1_primario","alimentacao_flotacao_finos",column)
-        GetAllModelfromPath(path,input_name,output_name,column)
+        GetAllModelfromPath(path, input_name, output_name, column)
 #-----------------------------------------------------------------------------------------------------------
 def FilteredModels(models):
     """
@@ -157,6 +160,10 @@ def FilteredModels(models):
 
 DownloadModels(r"models\3_1","cicl1_prim","alim_flot_finos","alimentacaoflotacaofines_diario")
 DownloadModels(r"models\3_2","cicl2_prim","alim_flot_finos","alimentacaoflotacaofines_diario")
+DownloadModels(r"models\5_3","alim_flot_fines","conc_flot_fines","concentradoflotacaofinos_diario")
+DownloadModels(r"models\8_6","alim_flot_grossos","rejt_flot_grossos","rejeitoflotacaogrossos_diario")
+DownloadModels(r"models\9_5","conc_flot_fines","rejt_flot_limp","rejeitoflotacaolimpeza_diario")
+DownloadModels(r"models\9_6","alim_flot_grossos","rejt_flot_limp","rejeitoflotacaolimpeza_diario")
 
 # Carregar todos os modelos disponíveis ao iniciar a API
 MODELS = {}
@@ -192,7 +199,10 @@ def LoadModels(path_name):
 #Carregando todos os  Modelos----------------------------------------------------------------------
 model_3_1=LoadModels("models/3_1")
 model_3_2=LoadModels("models/3_2")
-
+model_5_3=LoadModels("models/5_3")
+model_8_6=LoadModels("models/8_6")
+model_9_5=LoadModels("models/9_5")
+model_9_6=LoadModels("models/9_6")
 
 
 
@@ -207,13 +217,21 @@ def params(data:InputGetParams):
     target_model = data.target_model
 
      
-    if class_model not in ["3_1","3_2"]:
+    if class_model not in ["3_1","3_2","5_3","8_6","9_5","9_6"]:
         raise HTTPException(status_code=404, detail=f"Classe de modelo {class_model} não encontrado!")
     
     if class_model == "3_1":
             MODELS = model_3_1
     elif class_model == "3_2":
             MODELS = model_3_2
+    elif class_model == "5_3":
+        MODELS = model_5_3
+    elif class_model == "8_6":
+        MODELS = model_8_6
+    elif class_model == "9_5":
+        MODELS = model_9_5
+    elif class_model == "9_6":
+        MODELS = model_9_6
     else:
         pass
 
