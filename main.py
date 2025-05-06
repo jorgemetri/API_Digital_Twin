@@ -309,7 +309,7 @@ class InputClassFilteredModel(BaseModel):
 def get_filtered_models(data: InputClassFilteredModel):
     class_model = data.class_model
     print(f"Received class_model: '{class_model}'")  # Log para depuração
-    if class_model not in ["3_1", "3_2", "5_3"]:
+    if class_model not in ["3_1", "3_2", "5_3","8_6","9_5","9_6"]:
         raise HTTPException(status_code=404, detail=f"Classe de modelo {class_model} não encontrado!")
     
     try:
@@ -318,6 +318,12 @@ def get_filtered_models(data: InputClassFilteredModel):
         elif class_model == "3_2":
             filtered_models = FilteredModels(model_3_2)
         elif class_model == "5_3":
+            filtered_models = FilteredModels(model_5_3)
+        elif class_model == "8_6":
+            filtered_models = FilteredModels(model_5_3)
+        elif class_model == "9_5":
+            filtered_models = FilteredModels(model_5_3)
+        elif class_model == "9_6":
             filtered_models = FilteredModels(model_5_3)
         return {"filtered_models": filtered_models}
     except Exception as e:
