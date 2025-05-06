@@ -163,7 +163,7 @@ DownloadModels(r"models\3_2","cicl2_prim","alim_flot_finos","alimentacaoflotacao
 DownloadModels(r"models\5_3","alim_flot_fines","conc_flot_fines","concentradoflotacaofinos_diario")
 DownloadModels(r"models\8_6","alim_flot_grossos","rejt_flot_grossos","rejeitoflotacaogrossos_diario")
 DownloadModels(r"models\9_5","conc_flot_fines","rejt_flot_limp","rejeitoflotacaolimpeza_diario")
-DownloadModels(r"models\9_6","alim_flot_grossos","rejt_flot_limp","rejeitoflotacaolimpeza_diario")
+DownloadModels(r"models\9_6","alim_flot_grossos","rej_flot_limp","rejeitoflotacaolimpeza_diario")
 
 # Carregar todos os modelos disponíveis ao iniciar a API
 MODELS = {}
