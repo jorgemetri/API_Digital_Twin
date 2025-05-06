@@ -303,21 +303,23 @@ def predict(data: InputData):
     
 
 class InputClassFilteredModel(BaseModel):
-    class_model: str   
+    class_model: str
+
 @app.post("/filtered-models", dependencies=[Depends(verify_token)])
 def get_filtered_models(data: InputClassFilteredModel):
     class_model = data.class_model
-    # Verificar se a classe de modelo existe
-    if class_model not in ["3_1","3_2"]:
+    print(f"Received class_model: '{class_model}'")  # Log para depuração
+    if class_model not in ["3_1", "3_2", "5_3"]:
         raise HTTPException(status_code=404, detail=f"Classe de modelo {class_model} não encontrado!")
     
     try:
         if class_model == "3_1":
-            filtered_models = FilteredModels(model_3_1) 
+            filtered_models = FilteredModels(model_3_1)
         elif class_model == "3_2":
             filtered_models = FilteredModels(model_3_2)
-        else:
-            return {"filtered_models":filtered_models}
+        elif class_model == "5_3":
+            filtered_models = FilteredModels(model_5_3)
+        return {"filtered_models": filtered_models}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao retornar modelos filtrados: {e}")
     
