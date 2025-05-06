@@ -13,19 +13,18 @@ from fastapi.middleware.cors import CORSMiddleware  # Importe o módulo CORS
 app = FastAPI()
 # Adicionar suporte a CORS
 origins = [
-    "https://jorge-metri-miranda.itch.io",  # Domínio base do seu jogo no itch.io
-    "http://localhost",  # Para testes locais
-    "http://localhost:8000",  # Para testes locais com a API
+    "https://jorge-metri-miranda.itch.io",  # Sua página específica do itch.io (mantenha)
+    "https://html-classic.itch.zone",     # Adicione o domínio genérico do itch.io <<<---- ADICIONE ESTA LINHA
+    "http://localhost",
+    "http://localhost:8000",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # Lista de origens permitidas
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Permite todos os métodos
-    allow_headers=["*"],  # Permite todos os cabeçalhos
-    allow_origins_regex=None,  # Evita conflitos com origens regex
-    expose_headers=None,  # Não expõe cabeçalhos adicionais, a menos que necessário
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 # Token de autenticação (substitua por algo único e secreto)
 API_TOKEN = "meu-token-secreto-12345"
