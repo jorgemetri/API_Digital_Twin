@@ -143,7 +143,7 @@ def DownloadModels(path, input_name, output_name, input_table_name):
 #-----------------------------------------------------------------------------------------------------------
 def FilteredModels(models):
     """
-    Recebe como entrada um dicionário de modelos e retorna os nomes dos modelos que atendem às condições.
+    Recebe como entrada um dicionário de modelos e retorna os nomes dos modelos que atendem às condições que no caso é o intercept > -10.
     args:
         models: Dicionário com os modelos treinados
     return:
@@ -308,7 +308,7 @@ class InputClassFilteredModel(BaseModel):
 def get_filtered_models(data: InputClassFilteredModel):
     class_model = data.class_model
     # Verificar se a classe de modelo existe
-    if class_model not in ["3_1","3_2","5_3","8_6","9_5","9_6"]:
+    if class_model not in ["3_1","3_2"]:
         raise HTTPException(status_code=404, detail=f"Classe de modelo {class_model} não encontrado!")
     
     try:
@@ -316,14 +316,6 @@ def get_filtered_models(data: InputClassFilteredModel):
             filtered_models = FilteredModels(model_3_1) 
         elif class_model == "3_2":
             filtered_models = FilteredModels(model_3_2)
-        elif class_model == "5_3":
-             filtered_models = FilteredModels(model_5_3)
-        elif class_model == "8_6":
-            filtered_models = FilteredModels(model_8_6)
-        elif class_model == "9_5":
-            filtered_models = FilteredModels(model_9_5)
-        elif class_model == "9_6":
-            filtered_models = FilteredModels(model_9_6)
         else:
             return {"filtered_models":filtered_models}
     except Exception as e:
