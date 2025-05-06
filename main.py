@@ -185,7 +185,7 @@ model_3_2=LoadModels("models/3_2")
 class InputGetParams(BaseModel):
     class_model:str
     target_model:str
-@app.get('/params',dependencies=[Depends(verify_token)])
+@app.post('/params',dependencies=[Depends(verify_token)])
 def params(data:InputGetParams):
 
     class_model = data.class_model
@@ -230,6 +230,7 @@ def predict(data: InputData):
     class_model = data.class_model# Refere=se a qual tipo de subpasta em models está o modelo ex: models\3_2,models\3_1
     target_model = data.target_model#Refere-se ao modelo específico dentro da pasta model
     
+    input_dict["DATA_mes_sin"]
     #Carrega os modelos de acorod com class_model
     
     if class_model == "3_1":
@@ -262,7 +263,7 @@ def predict(data: InputData):
 
 class InputClassFilteredModel(BaseModel):
     class_model: str   
-@app.get("/filtered-models", dependencies=[Depends(verify_token)])
+@app.post("/filtered-models", dependencies=[Depends(verify_token)])
 def get_filtered_models(data: InputClassFilteredModel):
     class_model = data.class_model
     # Verificar se a classe de modelo existe
@@ -286,7 +287,7 @@ def get_filtered_models(data: InputClassFilteredModel):
 
 class InputDataModel(BaseModel):
     database:str #Refere-se a subpasta dentro de models
-@app.get("/features", dependencies=[Depends(verify_token)])
+@app.post("/features", dependencies=[Depends(verify_token)])
 def get_filtered_features(data: InputDataModel):
     database = data.database
     try:
@@ -295,14 +296,14 @@ def get_filtered_features(data: InputDataModel):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Nome de tabela informado errado ou não existe! Não foi possível retornar os dados corretamente: {e}")
 
-#Rota para pegar a base de dados filtrada pela última linha, baseado no nome e no nome 
-# da coluna.
+#Rota para pegar a base de dados filtrada pela última linha, baseado no nome da tabela e no nome 
+# da coluna na tabela-------------------------------------------------------------------------------
 class InputDataDatabase(BaseModel):
     nome_database: str
     nome_coluna:str
 
 # Rota para pegar a última linha da base de dados, ordenada pela coluna "DATA"
-@app.get("/lastrow", dependencies=[Depends(verify_token)])
+@app.post("/lastrow", dependencies=[Depends(verify_token)])
 def get_last_row_database_with_Column_name(data: InputDataDatabase):
     nome_database = data.nome_database
     nome_coluna = data.nome_coluna
