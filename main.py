@@ -320,11 +320,11 @@ def get_filtered_models(data: InputClassFilteredModel):
         elif class_model == "5_3":
             filtered_models = FilteredModels(model_5_3)
         elif class_model == "8_6":
-            filtered_models = FilteredModels(model_5_3)
+            filtered_models = FilteredModels(model_8_6)
         elif class_model == "9_5":
-            filtered_models = FilteredModels(model_5_3)
+            filtered_models = FilteredModels(model_9_5)
         elif class_model == "9_6":
-            filtered_models = FilteredModels(model_5_3)
+            filtered_models = FilteredModels(model_9_6)
         return {"filtered_models": filtered_models}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao retornar modelos filtrados: {e}")
